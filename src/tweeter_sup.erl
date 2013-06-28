@@ -47,9 +47,24 @@ init([]) ->
             list_to_integer(RawPort)
     end,
 
-    Resources = [tweeter_resource],
+    Resources = [tweeter_wm_tweet_resource,
+                 tweeter_wm_asset_resource],
 
     Dispatch = lists:flatten([Module:routes() || Module <- Resources]),
+
+    %% Create an ETS table for storing the tweets.
+    _ = ets:new(tweets, [public,
+                         ordered_set,
+                         named_table,
+                         {read_concurrency, true},
+                         {write_concurrency, true}]),
+
+    %% Seed the database with some tweets.
+    _ = ets:insert(tweets, [
+                {erlang:now(), [{avatar, <<"https://si0.twimg.com/profile_images/2536088319/4sl2go65was3o0km520j_reasonably_small.jpeg">>}, {message, <<"Caremad.">>}]},
+                {erlang:now(), [{avatar, <<"https://si0.twimg.com/profile_images/3778090444/e4fde2cad4b921cd8c07fcecc0ff2fff_bigger.jpeg">>}, {message, <<"Rubby is over!">>}]},
+                {erlang:now(), [{avatar, <<"https://si0.twimg.com/profile_images/2536088319/4sl2go65was3o0km520j_reasonably_small.jpeg">>}, {message, <<"You boys having a taste?">>}]}
+            ]),
 
     WebConfig = [
                  {ip, Ip},

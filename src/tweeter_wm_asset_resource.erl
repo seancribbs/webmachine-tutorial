@@ -1,4 +1,4 @@
--module(tweeter_resource).
+-module(tweeter_wm_asset_resource).
 
 -export([init/1,
          routes/0,
