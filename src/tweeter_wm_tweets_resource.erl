@@ -1,4 +1,4 @@
--module(tweeter_wm_tweet_resource).
+-module(tweeter_wm_tweets_resource).
 
 -export([init/1,
          routes/0,
@@ -23,6 +23,12 @@ content_types_provided(ReqData, Context) ->
 
 %% @doc Return the list of tweets.
 to_json(ReqData, Context) ->
-    Tweets = [Value || [{_Key, Value}] <- ets:match(tweets, '$1')],
+    Tweets = [Value ++ [{id, time_to_timestamp(Key)}] ||
+                [{Key, Value}] <- ets:match(tweets, '$1')],
     Content = mochijson2:encode({struct, [{tweets, Tweets}]}),
     {Content, ReqData, Context}.
+
+%% @doc Convert time to unix time.
+time_to_timestamp({Mega, Sec, Micro}) ->
+    Time = Mega * 1000000 * 1000000 + Sec * 1000000 + Micro,
+    list_to_binary(integer_to_list(Time)).

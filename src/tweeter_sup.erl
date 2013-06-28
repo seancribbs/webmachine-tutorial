@@ -47,7 +47,7 @@ init([]) ->
             list_to_integer(RawPort)
     end,
 
-    Resources = [tweeter_wm_tweet_resource,
+    Resources = [tweeter_wm_tweets_resource,
                  tweeter_wm_asset_resource],
 
     Dispatch = lists:flatten([Module:routes() || Module <- Resources]),
