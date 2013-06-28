@@ -47,9 +47,9 @@ init([]) ->
             list_to_integer(RawPort)
     end,
 
-    {ok, Dispatch} = file:consult(filename:join(
-                         [filename:dirname(code:which(?MODULE)),
-                         "..", "priv", "dispatch.conf"])),
+    Resources = [tweeter_resource],
+
+    Dispatch = lists:flatten([Module:routes() || Module <- Resources]),
 
     WebConfig = [
                  {ip, Ip},
