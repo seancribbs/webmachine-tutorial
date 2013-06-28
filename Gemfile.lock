@@ -1,0 +1,12 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    foreman (0.47.0)
+      thor (>= 0.13.6)
+    thor (0.15.2)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  foreman
