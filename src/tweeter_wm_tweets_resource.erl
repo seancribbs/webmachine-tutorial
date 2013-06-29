@@ -6,6 +6,7 @@
          to_stream/2,
          from_json/2,
          create_path/2,
+         generate_etag/2,
          post_is_create/2,
          allowed_methods/2,
          content_types_accepted/2,
@@ -13,7 +14,7 @@
 
 -include_lib("webmachine/include/webmachine.hrl").
 
--record(context, {tweet}).
+-record(context, {tweet, tweets}).
 
 %% @doc Initialize the resource.
 init([]) ->
@@ -30,6 +31,23 @@ post_is_create(ReqData, Context) ->
 %% @doc Return the routes this module should respond to.
 routes() ->
     [{["tweets"], ?MODULE, []}].
+
+%% @doc Generate etag for tweets.
+generate_etag(ReqData, Context) ->
+    {_, NewContext} =  maybe_retrieve_tweets(Context),
+    ETag = mochihex:to_hex(erlang:phash2(NewContext#context.tweets)),
+    {ETag, ReqData, NewContext}.
+
+%% @doc Attempt to retrieve tweet list.
+maybe_retrieve_tweets(Context) ->
+    case Context#context.tweets of
+        undefined ->
+            Tweets = [encode({Key, Value})
+                      || [{Key, Value}] <- ets:match(tweets, '$1')],
+            {true, Context#context{tweets=Tweets}};
+        _ ->
+            {true, Context}
+    end.
 
 %% @doc Provide only application/json content.
 content_types_provided(ReqData, Context) ->
@@ -71,7 +89,7 @@ maybe_create_tweet(ReqData, Context) ->
                 _ = ets:insert(tweets, [Tweet]),
 
                 %% Broadcast to all listeners.
-                [{tweet, Tweet} ! Pid || Pid <- pg2:get_members(tweets)],
+                [Pid ! {tweet, Tweet} || Pid <- pg2:get_members(tweets)],
 
                 {true, Context#context{tweet=Tweet}}
             catch
@@ -96,8 +114,11 @@ from_json(ReqData, Context) ->
 
 %% @doc Return the list of tweets.
 to_json(ReqData, Context) ->
-    Tweets = [encode({Key, Value}) || [{Key, Value}] <- ets:match(tweets, '$1')],
-    Content = mochijson2:encode({struct, [{tweets, Tweets}]}),
+    {_, NewContext} = maybe_retrieve_tweets(Context),
+    Content = mochijson2:encode({struct, 
+                                 [
+                                  {tweets, NewContext#context.tweets}
+                                 ]}),
     {Content, ReqData, Context}.
 
 %% @doc Return stream of tweets.

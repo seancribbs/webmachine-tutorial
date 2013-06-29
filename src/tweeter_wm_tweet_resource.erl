@@ -3,6 +3,7 @@
 -export([init/1,
          routes/0,
          to_json/2,
+         generate_etag/2,
          resource_exists/2,
          content_types_provided/2]).
 
@@ -25,6 +26,12 @@ tweet_id(ReqData) ->
 %% @doc Provide only application/json content.
 content_types_provided(ReqData, Context) ->
     {[{"application/json", to_json}], ReqData, Context}.
+
+%% @doc Generate etag.
+generate_etag(ReqData, Context) ->
+    {_, NewContext} =  maybe_retrieve_tweet(Context, tweet_id(ReqData)),
+    ETag = mochihex:to_hex(erlang:phash2(NewContext#context.tweet)),
+    {ETag, ReqData, NewContext}.
 
 %% @doc Determine if the tweet exists.
 resource_exists(ReqData, Context) ->
