@@ -67,6 +67,9 @@ init([]) ->
                 {erlang:now(), [{avatar, <<"https://si0.twimg.com/profile_images/2536088319/4sl2go65was3o0km520j_reasonably_small.jpeg">>}, {message, <<"You boys having a taste?">>}]}
             ]),
 
+    %% Register a pg2 group.
+    ok = pg2:create(tweets),
+
     WebConfig = [
                  {ip, Ip},
                  {port, Port},
