@@ -53,7 +53,6 @@ maybe_retrieve_tweet(Context, TweetId) ->
         undefined ->
             case ets:lookup(tweets, TweetId) of
                 [] ->
-                    io:format("no results!!!"),
                     {false, Context};
                 [{_Key, Tweet}] ->
                     {true, Context#context{tweet=Tweet}}
