@@ -67,19 +67,22 @@ init([]) ->
                 {erlang:now(), [{avatar, <<"https://si0.twimg.com/profile_images/2536088319/4sl2go65was3o0km520j_reasonably_small.jpeg">>}, {message, <<"You boys having a taste?">>}]}
             ]),
 
-    %% Register a pg2 group.
-    ok = pg2:create(tweets),
-
     WebConfig = [
                  {ip, Ip},
                  {port, Port},
                  {log_dir, "priv/log"},
                  {dispatch, Dispatch}],
 
+    %% This is the web-server listener and dispatcher.
     Web = {webmachine_mochiweb,
            {webmachine_mochiweb, start, [WebConfig]},
            permanent, 5000, worker, [mochiweb_socket_server]},
 
-    Processes = [Web],
+    %% This is the publish-subscribe process, a gen_event.
+    Events = {tweeter_events,
+              {tweeter_events, start_link, []},
+              permanent, 5000, worker, [tweeter_events]},
+
+    Processes = [Events, Web],
 
     {ok, { {one_for_one, 10, 10}, Processes} }.
