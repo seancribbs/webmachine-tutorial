@@ -1,4 +1,11 @@
 $(document).ready(function() {
+  var generateTweet = function(tweet) {
+    return "<li><div class='avatar' style='background: url(" +
+           tweet.avatar +
+           "); background-size: 50px 50px;'></div><div class='message'>" 
+           + tweet.message + "</div></li>";
+  };
+
   $('#add-tweet').click(function() {
     $('#add-tweet-form').toggle();
   });
@@ -12,13 +19,12 @@ $(document).ready(function() {
       type: 'POST',
       url: '/tweets',
       contentType: 'application/json',
-      data: JSON.stringify({ tweet: { avatar: "https://si0.twimg.com/profile_images/2536088319/4sl2go65was3o0km520j_reasonably_small.jpeg", message: tweetMessage }}),
+      data: JSON.stringify({ tweet: {
+        avatar: "https://si0.twimg.com/profile_images/2536088319/4sl2go65was3o0km520j_reasonably_small.jpeg",
+        message: tweetMessage }}),
       success: function(d) {
-        var tweetList = $('#tweet-list');
-
         tweetMessageField.val('');
         tweetMessageForm.toggle();
-        tweetList.prepend("<li><div class='avatar' style='background: url(" + d.tweet.avatar + "); background-size: 50px 50px;'></div><div class='message'>" + d.tweet.message + "</div></li>");
       }
     });
   });
@@ -30,8 +36,17 @@ $(document).ready(function() {
         var tweetList = $('#tweet-list');
 
         d.tweets.reverse().forEach(function(i) {
-          tweetList.append("<li><div class='avatar' style='background: url(" + i.avatar + "); background-size: 50px 50px;'></div><div class='message'>" + i.message + "</div></li>");
+          tweetList.append(generateTweet(i));
         });
+
+        if (!!window.EventSource) {
+          var source = new EventSource('/tweets');
+
+          source.addEventListener('message', function(e) {
+            var tweetList = $('#tweet-list'), d = JSON.parse(e.data);
+            tweetList.prepend(generateTweet(d));
+          }, false);
+        }
       }
     }
   });
