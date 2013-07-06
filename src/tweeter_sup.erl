@@ -62,9 +62,9 @@ init([]) ->
 
     %% Seed the database with some tweets.
     _ = ets:insert(tweets, [
-                {erlang:now(), [{avatar, <<"https://si0.twimg.com/profile_images/2536088319/4sl2go65was3o0km520j_reasonably_small.jpeg">>}, {message, <<"Caremad.">>}]},
-                {erlang:now(), [{avatar, <<"https://si0.twimg.com/profile_images/3778090444/e4fde2cad4b921cd8c07fcecc0ff2fff_bigger.jpeg">>}, {message, <<"Rubby is over!">>}]},
-                {erlang:now(), [{avatar, <<"https://si0.twimg.com/profile_images/2536088319/4sl2go65was3o0km520j_reasonably_small.jpeg">>}, {message, <<"You boys having a taste?">>}]}
+                {erlang:now(), [{avatar, <<"http://upload.wikimedia.org/wikipedia/en/thumb/f/f4/The_Wire_Jimmy_McNulty.jpg/250px-The_Wire_Jimmy_McNulty.jpg">>}, {message, <<"Pawns.">>}]},
+                {erlang:now(), [{avatar, <<"http://upload.wikimedia.org/wikipedia/en/thumb/1/15/The_Wire_Bunk.jpg/250px-The_Wire_Bunk.jpg">>}, {message, <<"A man's gotta have a code.">>}]},
+                {erlang:now(), [{avatar, <<"http://upload.wikimedia.org/wikipedia/en/thumb/f/f4/The_Wire_Jimmy_McNulty.jpg/250px-The_Wire_Jimmy_McNulty.jpg">>}, {message, <<"You boys have a taste?">>}]}
             ]),
 
     WebConfig = [
