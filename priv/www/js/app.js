@@ -2,7 +2,7 @@ $(document).ready(function() {
   var generateTweet = function(tweet) {
     return "<li><div class='avatar' style='background: url(" +
            tweet.avatar +
-           "); background-size: 50px 50px;'></div><div class='message'>" 
+           "); background-size: auto 50px; background-position: center center;'></div><div class='message'>"
            + tweet.message + "</div></li>";
   };
 
@@ -12,15 +12,17 @@ $(document).ready(function() {
 
   $('#add-tweet-submit').click(function() {
     var tweetMessageField = $('#add-tweet-message');
+    var tweetMessageAvatar = $('#add-tweet-avatar');
     var tweetMessageForm = $('#add-tweet-form');
     var tweetMessage = tweetMessageField.val();
+    var tweetAvatar = tweetMessageAvatar.val();
 
     $.ajax({
       type: 'POST',
       url: '/tweets',
       contentType: 'application/json',
       data: JSON.stringify({ tweet: {
-        avatar: "https://si0.twimg.com/profile_images/2536088319/4sl2go65was3o0km520j_reasonably_small.jpeg",
+        avatar: tweetAvatar,
         message: tweetMessage }}),
       success: function(d) {
         tweetMessageField.val('');

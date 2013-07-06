@@ -18,6 +18,16 @@
       </div>
 
       <div id="add-tweet-form" class="add-tweet-form">
+        <select id="add-tweet-avatar" class="person">
+          <option value="http://upload.wikimedia.org/wikipedia/en/thumb/f/f4/The_Wire_Jimmy_McNulty.jpg/250px-The_Wire_Jimmy_McNulty.jpg">Jimmy</option>
+          <option value="http://upload.wikimedia.org/wikipedia/en/thumb/1/15/The_Wire_Bunk.jpg/250px-The_Wire_Bunk.jpg">Bunk</option>
+          <option value="http://upload.wikimedia.org/wikipedia/en/thumb/6/6c/The_Wire_Kima.jpg/250px-The_Wire_Kima.jpg">Kima</option>
+          <option value="http://upload.wikimedia.org/wikipedia/en/thumb/7/73/The_Wire_Bubbles.jpg/250px-The_Wire_Bubbles.jpg">Bubbles</option>
+          <option value="http://upload.wikimedia.org/wikipedia/en/thumb/2/2f/The_Wire_Avon.jpg/250px-The_Wire_Avon.jpg">Avon</option>
+          <option value="http://upload.wikimedia.org/wikipedia/en/thumb/b/b7/The_Wire_Stringer_Bell.jpg/250px-The_Wire_Stringer_Bell.jpg">Stringer</option>
+          <option value="http://upload.wikimedia.org/wikipedia/en/thumb/a/a9/The_Wire_Dangelo_Barksdale.jpg/250px-The_Wire_Dangelo_Barksdale.jpg">D'Angelo</option>
+          <option value="http://upload.wikimedia.org/wikipedia/en/thumb/7/78/The_Wire_Omar.jpg/250px-The_Wire_Omar.jpg">Omar</option>
+        </select>
         <input id="add-tweet-message" type="text" class="message" />
         <a id="add-tweet-submit" class="button post">POST!</a>
       </div>
