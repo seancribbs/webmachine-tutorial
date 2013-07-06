@@ -5,3 +5,4 @@ deps
 *.plt
 priv/log/*.log
 ebin/
+log/*.log

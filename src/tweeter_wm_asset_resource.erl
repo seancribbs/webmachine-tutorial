@@ -34,9 +34,7 @@ normalize_filepath(Filepath) ->
 identify_resource(ReqData, #context{filename=undefined}=Context) ->
     case wrq:disp_path(ReqData) of
         "" ->
-            DefaultFilepath = ["index.html"],
-            Filename = normalize_filepath(DefaultFilepath),
-            {true, Context#context{filename=Filename}};
+            {true, Context#context{filename=template}};
         _ ->
             Tokens = wrq:path_tokens(ReqData),
             Filename = normalize_filepath(Tokens),
@@ -49,6 +47,8 @@ identify_resource(_ReqData, Context) ->
 %%      they are asking for the application template.
 resource_exists(ReqData, Context) ->
     case identify_resource(ReqData, Context) of
+        {true, NewContext=#context{filename=template}} ->
+            {true, ReqData, NewContext};
         {true, NewContext=#context{filename=Filename}} ->
             case filelib:is_regular(Filename) of
                 true ->
@@ -62,6 +62,8 @@ resource_exists(ReqData, Context) ->
 %%      text/html.
 content_types_provided(ReqData, Context) ->
     case identify_resource(ReqData, Context) of
+        {true, NewContext=#context{filename=template}} ->
+            {[{"text/html", to_resource}], ReqData, NewContext};
         {true, NewContext=#context{filename=Filename}} ->
             MimeType = webmachine_util:guess_mime(Filename),
             {[{MimeType, to_resource}], ReqData, NewContext};
@@ -70,6 +72,9 @@ content_types_provided(ReqData, Context) ->
     end.
 
 %% @doc Return the resources content.
+to_resource(ReqData, #context{filename=template}=Context) ->
+    {ok, Content} = application_dtl:render(),
+    {Content, ReqData, Context};
 to_resource(ReqData, #context{filename=Filename}=Context) ->
     {ok, Source} = file:read_file(Filename),
     {Source, ReqData, Context}.
