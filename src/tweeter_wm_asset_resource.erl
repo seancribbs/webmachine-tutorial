@@ -73,8 +73,12 @@ content_types_provided(ReqData, Context) ->
 
 %% @doc Return the resources content.
 to_resource(ReqData, #context{filename=template}=Context) ->
-    {ok, Content} = application_dtl:render(),
-    {Content, ReqData, Context};
+    Token = tweeter_security:csrf_token(ReqData, Context),
+    {ok, Content} = application_dtl:render([{csrf_token, Token}]),
+    {Content,
+     wrq:set_resp_header("Set-Cookie",
+                         "csrf_token="++Token++"; httponly", ReqData),
+     Context};
 to_resource(ReqData, #context{filename=Filename}=Context) ->
     {ok, Source} = file:read_file(Filename),
     {Source, ReqData, Context}.

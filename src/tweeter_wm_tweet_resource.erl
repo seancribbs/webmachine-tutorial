@@ -3,6 +3,7 @@
 -export([init/1,
          routes/0,
          to_json/2,
+         forbidden/2,
          generate_etag/2,
          resource_exists/2,
          content_types_provided/2]).
@@ -18,6 +19,10 @@ init([]) ->
 %% @doc Return the routes this module should respond to.
 routes() ->
     [{["tweets", tweet_id], ?MODULE, []}].
+
+%% @doc Validate CSRF token.
+forbidden(ReqData, Context) ->
+    {tweeter_security:is_protected(ReqData, Context), ReqData, Context}.
 
 %% @doc Extract the identifier out of the URL.
 tweet_id(ReqData) ->

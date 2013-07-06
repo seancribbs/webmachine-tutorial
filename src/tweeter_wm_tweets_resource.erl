@@ -4,6 +4,7 @@
          routes/0,
          to_json/2,
          to_stream/2,
+         forbidden/2,
          from_json/2,
          create_path/2,
          generate_etag/2,
@@ -19,6 +20,10 @@
 %% @doc Initialize the resource.
 init([]) ->
     {ok, #context{}}.
+
+%% @doc Validate CSRF token.
+forbidden(ReqData, Context) ->
+    {tweeter_security:is_protected(ReqData, Context), ReqData, Context}.
 
 %% @doc Support retrieval and creation of tweets.
 allowed_methods(ReqData, Context) ->

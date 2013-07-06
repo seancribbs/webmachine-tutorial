@@ -1,4 +1,12 @@
 $(document).ready(function() {
+  $(document).bind("ajaxSend", function(elm, xhr, s){
+    var csrf_token = $('meta[name=csrf_token]').attr('content');
+
+    if (s.type === 'POST' || s.type === 'PUT') {
+      xhr.setRequestHeader('X-CSRF-Token', csrf_token);
+    }
+  });
+
   var generateTweet = function(tweet) {
     return "<li><div class='avatar' style='background: url(" +
            tweet.avatar +
