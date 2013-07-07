@@ -14,7 +14,8 @@
 %% @doc Initialize the resource.
 -spec init([]) -> {ok, #context{}}.
 init([]) ->
-    {ok, #context{}}.
+    wmtrace_resource:add_dispatch_rule("wmtrace", "/tmp"),
+    {{trace, "/tmp"}, #context{}}.
 
 %% @doc Return the routes this module should respond to.
 -spec routes() -> [webmachine_dispatcher:matchterm()].
@@ -31,7 +32,7 @@ allowed_methods(ReqData, Context) ->
 -spec normalize_filepath(list()) -> list().
 normalize_filepath(Filepath) ->
     {ok, App} = application:get_application(?MODULE),
-    filename:join([priv_dir(App), "www"] ++ Filepath).
+    filename:join([priv_dir(App), "ww"] ++ Filepath).
 
 %% @doc Return a context which determines if we serve up the index or a
 %%      particular file
