@@ -18,32 +18,43 @@
 -record(context, {tweet, tweets}).
 
 %% @doc Initialize the resource.
+-spec init([]) -> {ok, #context{}}.
 init([]) ->
     {ok, #context{}}.
 
+%% @doc Return the routes this module should respond to.
+-spec routes() -> [webmachine_dispatcher:matchterm()].
+routes() ->
+    [{["tweets"], ?MODULE, []}].
+
 %% @doc Validate CSRF token.
+-spec forbidden(wrq:reqdata(), #context{}) ->
+    {boolean(), wrq:reqdata(), #context{}}.
 forbidden(ReqData, Context) ->
     {tweeter_security:is_protected(ReqData, Context), ReqData, Context}.
 
 %% @doc Support retrieval and creation of tweets.
+-spec allowed_methods(wrq:reqdata(), #context{}) ->
+    {list(), wrq:reqdata(), #context{}}.
 allowed_methods(ReqData, Context) ->
     {['HEAD', 'GET', 'POST'], ReqData, Context}.
 
 %% @doc Allow POST request to create tweet.
+-spec post_is_create(wrq:reqdata(), #context{}) ->
+    {boolean(), wrq:reqdata(), #context{}}.
 post_is_create(ReqData, Context) ->
     {true, ReqData, Context}.
 
-%% @doc Return the routes this module should respond to.
-routes() ->
-    [{["tweets"], ?MODULE, []}].
-
 %% @doc Generate etag for tweets.
+-spec generate_etag(wrq:reqdata(), #context{}) ->
+    {binary(), wrq:reqdata(), #context{}}.
 generate_etag(ReqData, Context) ->
     {_, NewContext} =  maybe_retrieve_tweets(Context),
     ETag = mochihex:to_hex(erlang:phash2(NewContext#context.tweets)),
     {ETag, ReqData, NewContext}.
 
 %% @doc Attempt to retrieve tweet list.
+-spec maybe_retrieve_tweets(#context{}) -> {boolean(), #context{}}.
 maybe_retrieve_tweets(Context) ->
     case Context#context.tweets of
         undefined ->
@@ -55,15 +66,21 @@ maybe_retrieve_tweets(Context) ->
     end.
 
 %% @doc Provide only application/json content.
+-spec content_types_provided(wrq:reqdata(), #context{}) ->
+    {list({list(), atom()}), wrq:reqdata(), #context{}}.
 content_types_provided(ReqData, Context) ->
     {[{"application/json", to_json},
       {"text/event-stream", to_stream}], ReqData, Context}.
 
 %% @doc Accept only application/json content.
+-spec content_types_accepted(wrq:reqdata(), #context{}) ->
+    {list({list(), atom()}), wrq:reqdata(), #context{}}.
 content_types_accepted(ReqData, Context) ->
     {[{"application/json", from_json}], ReqData, Context}.
 
 %% @doc Attempt to create the tweet if possible.
+-spec create_path(wrq:reqdata(), #context{}) ->
+    {list(), wrq:reqdata(), #context{}}.
 create_path(ReqData, Context) ->
     case maybe_create_tweet(ReqData, Context) of
         {true, NewContext} ->
@@ -76,6 +93,7 @@ create_path(ReqData, Context) ->
     end.
 
 %% @doc Build a tweet.
+-spec generate(list()) -> {term(), list({atom(), binary()})}.
 generate(Attributes) ->
     {struct, [{<<"tweet">>, {struct, Decoded}}]} =
                                         mochijson2:decode(Attributes),
@@ -85,6 +103,8 @@ generate(Attributes) ->
     {Id, [{message, Message}, {avatar, Avatar}]}.
 
 %% @doc Attempt to create and stash in the context if possible.
+-spec maybe_create_tweet(wrq:reqdata(), #context{}) ->
+    {boolean(), #context{}}.
 maybe_create_tweet(ReqData, Context) ->
     case Context#context.tweet of
         undefined ->
@@ -106,6 +126,8 @@ maybe_create_tweet(ReqData, Context) ->
     end.
 
 %% @doc Accept user input, attempt to create.
+-spec from_json(wrq:reqdata(), #context{}) ->
+    {boolean() | {atom(), atom()}, wrq:reqdata(), #context{}}.
 from_json(ReqData, Context) ->
     case maybe_create_tweet(ReqData, Context) of
         {true, NewContext} ->
@@ -118,6 +140,8 @@ from_json(ReqData, Context) ->
     end.
 
 %% @doc Return the list of tweets.
+-spec to_json(wrq:reqdata(), #context{}) ->
+    {binary(), wrq:reqdata(), #context{}}.
 to_json(ReqData, Context) ->
     {_, NewContext} = maybe_retrieve_tweets(Context),
     Content = mochijson2:encode({struct, 
@@ -127,6 +151,8 @@ to_json(ReqData, Context) ->
     {Content, ReqData, Context}.
 
 %% @doc Return stream of tweets.
+-spec to_stream(wrq:reqdata(), #context{}) ->
+    {term(), wrq:reqdata(), #context{}}.
 to_stream(ReqData, Context) ->
     case tweeter_events:add_handler() of
         ok ->
@@ -137,11 +163,12 @@ to_stream(ReqData, Context) ->
     end.
 
 %% @doc Stream data from the pipeline out.
+-spec stream() -> {binary(), atom()}.
 stream() ->
     receive
         %% The gen_event crashed or exited, so we should kill the
         %% stream.
-        {gen_event_EXIT,tweeter_events,_} ->
+        {gen_event_EXIT, tweeter_events, _} ->
             {<<>>, done};
         %% We got a tweet, send it to the stream and recurse.
         {tweet, {TS, _Fields}=Tweet} ->
@@ -152,10 +179,13 @@ stream() ->
     end.
 
 %% @doc Convert time to unix time.
+-spec time_to_timestamp({integer(), integer(), integer()}) -> binary().
 time_to_timestamp({Mega, Sec, Micro}) ->
     Time = Mega * 1000000 * 1000000 + Sec * 1000000 + Micro,
     list_to_binary(integer_to_list(Time)).
 
 %% @doc Encode a tweet.
+-spec encode({{integer(), integer(), integer()}, list({atom(), binary()})}) ->
+    list({atom(), term()}).
 encode({Key, Value}) ->
     Value ++ [{id, time_to_timestamp(Key)}].

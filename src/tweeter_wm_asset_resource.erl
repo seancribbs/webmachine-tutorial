@@ -12,14 +12,18 @@
 -record(context, {filename}).
 
 %% @doc Initialize the resource.
+-spec init([]) -> {ok, #context{}}.
 init([]) ->
     {ok, #context{}}.
 
 %% @doc Return the routes this module should respond to.
+-spec routes() -> [webmachine_dispatcher:matchterm()].
 routes() ->
     [{[""], ?MODULE, []}, {['*'], ?MODULE, []}].
 
 %% @doc Handle serving of the single page application.
+-spec allowed_methods(wrq:reqdata(), #context{}) ->
+    {list(), wrq:reqdata(), #context{}}.
 allowed_methods(ReqData, Context) ->
     {['HEAD', 'GET'], ReqData, Context}.
 
@@ -31,6 +35,8 @@ normalize_filepath(Filepath) ->
 
 %% @doc Return a context which determines if we serve up the index or a
 %%      particular file
+-spec identify_resource(wrq:reqdata(), #context{}) ->
+    {boolean(), #context{}}.
 identify_resource(ReqData, #context{filename=undefined}=Context) ->
     case wrq:disp_path(ReqData) of
         "" ->
@@ -45,6 +51,8 @@ identify_resource(_ReqData, Context) ->
 
 %% @doc If the file exists, allow it through, otherwise assume true if
 %%      they are asking for the application template.
+-spec resource_exists(wrq:reqdata(), #context{}) ->
+    {boolean(), wrq:reqdata(), #context{}}.
 resource_exists(ReqData, Context) ->
     case identify_resource(ReqData, Context) of
         {true, NewContext=#context{filename=template}} ->
@@ -60,6 +68,8 @@ resource_exists(ReqData, Context) ->
 
 %% @doc Return the proper content type of the file, or default to
 %%      text/html.
+-spec content_types_provided(wrq:reqdata(), #context{}) ->
+    {list({list(), atom()}), wrq:reqdata(), #context{}}.
 content_types_provided(ReqData, Context) ->
     case identify_resource(ReqData, Context) of
         {true, NewContext=#context{filename=template}} ->
@@ -72,6 +82,8 @@ content_types_provided(ReqData, Context) ->
     end.
 
 %% @doc Return the resources content.
+-spec to_resource(wrq:reqdata(), #context{}) ->
+    {binary(), wrq:reqdata(), #context{}}.
 to_resource(ReqData, #context{filename=template}=Context) ->
     Token = tweeter_security:csrf_token(ReqData, Context),
     {ok, Content} = application_dtl:render([{csrf_token, Token}]),
@@ -84,6 +96,7 @@ to_resource(ReqData, #context{filename=Filename}=Context) ->
     {Source, ReqData, Context}.
 
 %% @doc Extract the priv dir for the application.
+-spec priv_dir(term()) -> list().
 priv_dir(Mod) ->
     case code:priv_dir(Mod) of
         {error, bad_name} ->
