@@ -4,12 +4,18 @@
          routes/0,
          to_resource/2,
          allowed_methods/2,
+         generate_etag/2,
+         last_modified/2,
          resource_exists/2,
          content_types_provided/2]).
 
 -include_lib("webmachine/include/webmachine.hrl").
+-include_lib("kernel/include/file.hrl").
 
--record(context, {filename}).
+-record(context, {filename,
+                  fileinfo,
+                  rendered,
+                  token}).
 
 %% @doc Initialize the resource.
 -spec init([]) -> {ok, #context{}}.
@@ -27,6 +33,24 @@ routes() ->
 allowed_methods(ReqData, Context) ->
     {['HEAD', 'GET'], ReqData, Context}.
 
+%% @doc Generates an etag for the asset being served.
+-spec generate_etag(wrq:reqdata(), #context{}) ->
+                           {list(), wrq:reqdata(), #context{}}.
+generate_etag(ReqData, #context{filename=template,
+                                rendered=Rendered}=Context) ->
+    {mochihex:to_hex(erlang:phash2(Rendered)), ReqData, Context};
+generate_etag(ReqData, #context{fileinfo=FileInfo}=Context) ->
+    {mochihex:to_hex(erlang:phash2(FileInfo)), ReqData, Context}.
+
+%% @doc Determines the time the asset was last modified
+-spec last_modified(wrq:reqdata(), #context{}) ->
+                           {undefined | calendar:datetime(),
+                            wrq:reqdata(), #context{}}.
+last_modified(ReqData, #context{filename=template}=Context) ->
+    {undefined, ReqData, Context};
+last_modified(ReqData, #context{fileinfo={ok, #file_info{mtime=MTime}}}=Context) ->
+    {MTime, ReqData, Context}.
+
 %% @doc Given a series of request tokens, normalize to priv dir file.
 -spec normalize_filepath(list()) -> list().
 normalize_filepath(Filepath) ->
@@ -40,11 +64,17 @@ normalize_filepath(Filepath) ->
 identify_resource(ReqData, #context{filename=undefined}=Context) ->
     case wrq:disp_path(ReqData) of
         "" ->
-            {true, Context#context{filename=template}};
+            Token = tweeter_security:csrf_token(ReqData, Context),
+            {ok, Content} = application_dtl:render([{csrf_token, Token}]),
+            {true, Context#context{filename=template,
+                                   rendered=Content,
+                                   token=Token}};
         _ ->
             Tokens = wrq:path_tokens(ReqData),
             Filename = normalize_filepath(Tokens),
-            {true, Context#context{filename=Filename}}
+            FileInfo = file:read_file_info(Filename),
+            {true, Context#context{filename=Filename,
+                                   fileinfo=FileInfo}}
     end;
 identify_resource(_ReqData, Context) ->
     {true, Context}.
@@ -84,9 +114,9 @@ content_types_provided(ReqData, Context) ->
 %% @doc Return the resources content.
 -spec to_resource(wrq:reqdata(), #context{}) ->
     {binary(), wrq:reqdata(), #context{}}.
-to_resource(ReqData, #context{filename=template}=Context) ->
-    Token = tweeter_security:csrf_token(ReqData, Context),
-    {ok, Content} = application_dtl:render([{csrf_token, Token}]),
+to_resource(ReqData, #context{filename=template,
+                              rendered=Content,
+                              token=Token}=Context) ->
     {Content,
      wrq:set_resp_header("Set-Cookie",
                          "csrf_token="++Token++"; httponly", ReqData),
